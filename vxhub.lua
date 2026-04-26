@@ -153,7 +153,7 @@ local DefaultConfig = {
         InfiniteJump   = false,
         TpSpeed        = 2.0,
     },
-    StealSpeed   = 20,
+    StealSpeed   = 90,
     ShowStealSpeedPanel = true,
     MenuKey      = "LeftControl",
     MobileGuiScale = 0.5,
@@ -11189,5 +11189,3 @@ do
         if SharedState.ApplyFullTheme then SharedState.ApplyFullTheme() end
     end)
 end
-
-
