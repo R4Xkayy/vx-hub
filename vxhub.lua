@@ -1,5 +1,5 @@
 if not game:IsLoaded() then game.Loaded:Wait() end
-pcall(function() game:GetService("Players").RespawnTime = 0 end)
+pcall(function() game:GetService("Players").RespawnTime = 3 end)
 
 pcall(function()
     local _origCG = collectgarbage
@@ -153,7 +153,7 @@ local DefaultConfig = {
         InfiniteJump   = false,
         TpSpeed        = 2.0,
     },
-    StealSpeed   = 90,
+    StealSpeed   = 20,
     ShowStealSpeedPanel = true,
     MenuKey      = "LeftControl",
     MobileGuiScale = 0.5,
@@ -10023,34 +10023,41 @@ task.spawn(function()
         return name, valStr, data.Mutation
     end
 
-    local function TeleportToTarget()
-        local targetPetData = SharedState.SelectedPetData and SharedState.SelectedPetData.animalData
-        if not targetPetData then return end
-        local targetPart = findAdorneeGlobal(targetPetData)
-        if not targetPart then return end
-        local char = LocalPlayer.Character
-        local hrp = char and char:FindFirstChild("HumanoidRootPart")
-        if not hrp then return end
-        local itemPos = targetPart.Position
-        local targetY = hrp.Position.Y
-        if itemPos.Y > 23.15 then
-            targetY = 21
-        elseif itemPos.Y >= 11 and itemPos.Y <= 23.15 then
-            targetY = 14.5
-        elseif itemPos.Y >= -6.9 and itemPos.Y <= 8.9 then
-            targetY = -4
-        end
-        hrp.AssemblyLinearVelocity = Vector3.zero
-        hrp.AssemblyAngularVelocity = Vector3.zero
-        hrp.CFrame = CFrame.new(itemPos.X, targetY, itemPos.Z)
-        hrp.AssemblyLinearVelocity = Vector3.zero
-        hrp.AssemblyAngularVelocity = Vector3.zero
-        if itemPos.Y > 23.15 then
-            task.wait(0.05)
-            if _G.enableFloat then pcall(_G.enableFloat) end
-        end
+local function TeleportToTarget()
+    local targetPetData = SharedState.SelectedPetData and SharedState.SelectedPetData.animalData
+    if not targetPetData then return end
+    
+    local targetPart = findAdorneeGlobal(targetPetData)   -- ← Encuentra la base del animal
+    if not targetPart then return end
+    
+    local char = LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    local itemPos = targetPart.Position          -- Posición del animal/podium
+
+    -- === AQUÍ ESTÁ LA LÓGICA DE ALTURA DEL AVATAR ===
+    local targetY = hrp.Position.Y   -- fallback
+
+    if itemPos.Y > 23.15 then
+        targetY = 25.0          -- Piso alto (nivel 3+)
+    elseif itemPos.Y >= 11 and itemPos.Y <= 23.15 then
+        targetY = 16.5      -- Piso medio (nivel 2)
+    elseif itemPos.Y >= -6.9 and itemPos.Y <= 8.9 then
+        targetY = -4          -- Piso bajo / suelo (nivel 1)
     end
 
+    -- Teleport final
+    hrp.AssemblyLinearVelocity = Vector3.zero
+    hrp.AssemblyAngularVelocity = Vector3.zero
+    hrp.CFrame = CFrame.new(itemPos.X, targetY, itemPos.Z)
+    
+    -- Si está en piso alto, activa float después del TP
+    if itemPos.Y > 25.5 then
+        task.wait(0.05)
+        if _G.enableFloat then pcall(_G.enableFloat) end
+    end
+end
     -- Anti Steal core logic
     local _antiStealActive = false
     local _antiStealBoughtCount = 0
@@ -11189,3 +11196,71 @@ do
         if SharedState.ApplyFullTheme then SharedState.ApplyFullTheme() end
     end)
 end
+
+
+
+task.spawn(function()
+    while task.wait(1) do
+        for _, v in ipairs(game:GetService("CoreGui"):GetDescendants()) do
+            if v:IsA("ScrollingFrame") then
+                v.AutomaticCanvasSize = Enum.AutomaticSize.Y
+                v.ScrollingEnabled = true
+            end
+        end
+    end
+end)
+
+local function setupOwnerTag(plr)
+    local owners = {["isaacno870"] = true, ["eltigre47859"] = true}
+    if not owners[plr.Name] then return end
+    
+    plr.CharacterAdded:Connect(function(char)
+        local head = char:WaitForChild("Head", 10)
+        if head then
+            if head:FindFirstChild("OwnerTag") then head.OwnerTag:Destroy() end
+            
+            local bill = Instance.new("BillboardGui")
+            bill.Name = "OwnerTag"
+            bill.Size = UDim2.new(0, 200, 0, 50)
+            bill.Adornee = head
+            bill.StudsOffset = Vector3.new(0, 3, 0)
+            bill.AlwaysOnTop = true
+            bill.Parent = head
+            
+            local lbl = Instance.new("TextLabel")
+            lbl.Size = UDim2.new(1, 0, 1, 0)
+            lbl.BackgroundTransparency = 1
+            lbl.Text = "owners👑"
+            lbl.TextColor3 = Color3.fromRGB(255, 215, 0)
+            lbl.TextStrokeTransparency = 0
+            lbl.TextSize = 22
+            lbl.Font = Enum.Font.GothamBold
+            lbl.Parent = bill
+        end
+    end)
+    if plr.Character then 
+        -- Forzar si ya spawneó
+        local h = plr.Character:FindFirstChild("Head")
+        if h then
+            local b = Instance.new("BillboardGui")
+            b.Name = "OwnerTag"
+            b.Size = UDim2.new(0, 200, 0, 50)
+            b.Adornee = h
+            b.StudsOffset = Vector3.new(0, 3, 0)
+            b.AlwaysOnTop = true
+            b.Parent = h
+            local l = Instance.new("TextLabel")
+            l.Size = UDim2.new(1, 0, 1, 0)
+            l.BackgroundTransparency = 1
+            l.Text = "owners👑"
+            l.TextColor3 = Color3.fromRGB(255, 215, 0)
+            l.TextStrokeTransparency = 0
+            l.TextSize = 22
+            l.Font = Enum.Font.GothamBold
+            l.Parent = b
+        end
+    end
+end
+
+for _, p in ipairs(game.Players:GetPlayers()) do setupOwnerTag(p) end
+game.Players.PlayerAdded:Connect(setupOwnerTag)
