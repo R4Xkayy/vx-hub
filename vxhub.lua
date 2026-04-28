@@ -10023,41 +10023,34 @@ task.spawn(function()
         return name, valStr, data.Mutation
     end
 
-local function TeleportToTarget()
-    local targetPetData = SharedState.SelectedPetData and SharedState.SelectedPetData.animalData
-    if not targetPetData then return end
-    
-    local targetPart = findAdorneeGlobal(targetPetData)   -- ← Encuentra la base del animal
-    if not targetPart then return end
-    
-    local char = LocalPlayer.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-
-    local itemPos = targetPart.Position          -- Posición del animal/podium
-
-    -- === AQUÍ ESTÁ LA LÓGICA DE ALTURA DEL AVATAR ===
-    local targetY = hrp.Position.Y   -- fallback
-
-    if itemPos.Y > 23.15 then
-        targetY = 25.0          -- Piso alto (nivel 3+)
-    elseif itemPos.Y >= 11 and itemPos.Y <= 23.15 then
-        targetY = 16.5      -- Piso medio (nivel 2)
-    elseif itemPos.Y >= -6.9 and itemPos.Y <= 8.9 then
-        targetY = -4          -- Piso bajo / suelo (nivel 1)
+    local function TeleportToTarget()
+        local targetPetData = SharedState.SelectedPetData and SharedState.SelectedPetData.animalData
+        if not targetPetData then return end
+        local targetPart = findAdorneeGlobal(targetPetData)
+        if not targetPart then return end
+        local char = LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
+        local itemPos = targetPart.Position
+        local targetY = hrp.Position.Y
+        if itemPos.Y > 23.15 then
+            targetY = 21
+        elseif itemPos.Y >= 11 and itemPos.Y <= 23.15 then
+            targetY = 14.5
+        elseif itemPos.Y >= -6.9 and itemPos.Y <= 8.9 then
+            targetY = -4
+        end
+        hrp.AssemblyLinearVelocity = Vector3.zero
+        hrp.AssemblyAngularVelocity = Vector3.zero
+        hrp.CFrame = CFrame.new(itemPos.X, targetY, itemPos.Z)
+        hrp.AssemblyLinearVelocity = Vector3.zero
+        hrp.AssemblyAngularVelocity = Vector3.zero
+        if itemPos.Y > 23.15 then
+            task.wait(0.05)
+            if _G.enableFloat then pcall(_G.enableFloat) end
+        end
     end
 
-    -- Teleport final
-    hrp.AssemblyLinearVelocity = Vector3.zero
-    hrp.AssemblyAngularVelocity = Vector3.zero
-    hrp.CFrame = CFrame.new(itemPos.X, targetY, itemPos.Z)
-    
-    -- Si está en piso alto, activa float después del TP
-    if itemPos.Y > 25.5 then
-        task.wait(0.05)
-        if _G.enableFloat then pcall(_G.enableFloat) end
-    end
-end
     -- Anti Steal core logic
     local _antiStealActive = false
     local _antiStealBoughtCount = 0
